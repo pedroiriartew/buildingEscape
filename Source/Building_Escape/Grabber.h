@@ -20,6 +20,8 @@ public:
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
+	
+
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
@@ -35,6 +37,11 @@ private:
 	void FindPhysicsHandle();
 	void SetUpInputComponent();
 
+	//Returns the distance of our grabbing hand
+	FVector GetPlayersReach() const;
+
 	//Returns the first actor in reach with a Physics body
 	FHitResult GetFirstPhysicsBodyInReach() const;
+
+	FVector GetPlayerWorldPosition() const;
 };

@@ -15,7 +15,6 @@ UGrabber::UGrabber()
 	PrimaryComponentTick.bCanEverTick = true;
 }
 
-
 // Called when the game starts
 void UGrabber::BeginPlay()
 {
@@ -44,22 +43,26 @@ void UGrabber::SetUpInputComponent()
 void UGrabber::FindPhysicsHandle()
 {
 	PhysicsHandle = GetOwner()->FindComponentByClass<UPhysicsHandleComponent>();
-	if (PhysicsHandle)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Nice PhysicsHandle Component Bro"));
-	}
-	else
+	if (PhysicsHandle==nullptr)
 	{
 		UE_LOG(LogTemp, Error, TEXT("The Object %s has no PhysicsHandle Component attached to it. Saved you from unemployment, thank me later."), *GetOwner()->GetName());
 	}
 }
-
 
 // Called every frame
 void UGrabber::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
+	//If the player has something grabbed, move it along its reach
+	if (PhysicsHandle->GrabbedComponent)
+	{
+		PhysicsHandle->SetTargetLocation(GetPlayersReach());
+	}
+}
+
+FVector UGrabber::GetPlayersReach() const
+{
 	FVector PlayerViewpointLocation;
 	FRotator PlayerViewPointRotation;
 
@@ -67,32 +70,11 @@ void UGrabber::TickComponent(float DeltaTime, ELevelTick TickType, FActorCompone
 		OUT PlayerViewpointLocation,
 		OUT PlayerViewPointRotation
 	);
-
-	//We add my location to the reach plus the rotation vector(It gives the direction)
-	FVector LineTraceEnd = PlayerViewpointLocation + PlayerViewPointRotation.Vector() * Reach;
-
-	if (PhysicsHandle->GrabbedComponent)
-	{
-		PhysicsHandle->SetTargetLocation(LineTraceEnd);
-	}
+	return PlayerViewpointLocation + PlayerViewPointRotation.Vector() * Reach;
 }
 
 void UGrabber::Grab()
 {
-	UE_LOG(LogTemp, Error, TEXT("Grabbbb"));
-
-	FVector PlayerViewpointLocation;
-	FRotator PlayerViewPointRotation;
-
-	GetWorld()->GetFirstPlayerController()->GetPlayerViewPoint(
-		OUT PlayerViewpointLocation,
-		OUT PlayerViewPointRotation
-	);
-
-	//We add my location to the reach plus the rotation vector(It gives the direction)
-	FVector LineTraceEnd = PlayerViewpointLocation + PlayerViewPointRotation.Vector() * Reach;
-
-	//Try to reach any actor with physics body collision channel set.
 	FHitResult ObjectGrabbed = GetFirstPhysicsBodyInReach();
 	UPrimitiveComponent* ComponentToGrab = ObjectGrabbed.GetComponent();
 
@@ -101,27 +83,34 @@ void UGrabber::Grab()
 		PhysicsHandle->GrabComponentAtLocation(
 			ComponentToGrab,
 			NAME_None,
-			LineTraceEnd
+			GetPlayersReach()
 		);
 	}
 }
 
 void UGrabber::Release()
 {
-	UE_LOG(LogTemp, Error, TEXT("RILISSSSSS"));
-
-	//Release what we grabbed
-
-	FHitResult ObjectGrabbed = GetFirstPhysicsBodyInReach();
-	UPrimitiveComponent* ComponentToGrab = ObjectGrabbed.GetComponent();
-
-	if (ObjectGrabbed.GetActor())
-	{
-		PhysicsHandle->ReleaseComponent();
-	}
+	PhysicsHandle->ReleaseComponent();
 }
 
 FHitResult UGrabber::GetFirstPhysicsBodyInReach() const
+{
+	//Our Trace parameters are its tag, if it recognize complex traces and what actors it ignores, in this case is our player's actor.
+	FCollisionQueryParams TraceParameters(FName(TEXT("")), false, GetOwner());
+	FHitResult Hit;
+
+	GetWorld()->LineTraceSingleByObjectType(
+		OUT Hit,
+		GetPlayerWorldPosition(),
+		GetPlayersReach(),
+		FCollisionObjectQueryParams(ECollisionChannel::ECC_PhysicsBody), //Parametros de los objetos que quiero. En este caso el Object Type aka collision channel
+		TraceParameters
+	);
+
+	return Hit;
+}
+
+FVector UGrabber::GetPlayerWorldPosition() const
 {
 	FVector PlayerViewpointLocation;
 	FRotator PlayerViewPointRotation;
@@ -131,33 +120,8 @@ FHitResult UGrabber::GetFirstPhysicsBodyInReach() const
 		OUT PlayerViewPointRotation
 	);
 
-	//We add my location to the reach plus the rotation vector(It gives the direction)
-	FVector LineTraceEnd = PlayerViewpointLocation + PlayerViewPointRotation.Vector() * Reach;
-
-	//Reaching out -> Raycast to a certain distance
-	FHitResult Hit;
-
-	//Our Trace parameters are its tag, if it recognize complex traces and what actors it ignores, in this case is our player's actor.
-	FCollisionQueryParams TraceParameters(FName(TEXT("")), false, GetOwner());
-
-	GetWorld()->LineTraceSingleByObjectType(
-		OUT Hit,
-		PlayerViewpointLocation,
-		LineTraceEnd,
-		FCollisionObjectQueryParams(ECollisionChannel::ECC_PhysicsBody), //Parametros de los objetos que quiero. En este caso el Object Type aka collision channel
-		TraceParameters
-	);
-
-	AActor* ActorHit = Hit.GetActor();
-
-	if (ActorHit)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("The actor's name is: %s"), *ActorHit->GetName());
-	}
-
-	return Hit;// We are going to do something with this actor hit.
+	return PlayerViewpointLocation;
 }
-
 
 /*
 //Draw a Line from our Player showing the reach;
