@@ -1,6 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "OpenDoor.h"
+#include "Components/AudioComponent.h"
 #include "Components/PrimitiveComponent.h"
 #include "Engine/World.h"
 #include "GameFramework/Actor.h"
@@ -31,12 +32,26 @@ void UOpenDoor::BeginPlay()
 	CurrentYaw = InitialYaw;
 	OpenAngle += InitialYaw;
 
+	FindPressurePlate();
+	FindAudioComponent();
+}
+
+void UOpenDoor::FindPressurePlate()
+{
 	if (!PressurePlate)
 	{
-		UE_LOG(LogTemp, Error, TEXT("The %s has the open door component but it hasn't been asigned yet."), *GetOwner()->GetName());//siempre me olvido del asterico que dereferencia
+		UE_LOG(LogTemp, Error, TEXT("The %s has the open door component but it has not a PressurePlate attached."), *GetOwner()->GetName());//siempre me olvido del asterico que dereferencia
 	}
 }
 
+void UOpenDoor::FindAudioComponent()
+{
+	AudioComponent = GetOwner()->FindComponentByClass<UAudioComponent>();
+	if (!AudioComponent)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Missing audio component in %s"), *GetOwner()->GetName());
+	}
+}
 
 // Called every frame
 void UOpenDoor::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -63,6 +78,13 @@ void UOpenDoor::OpenDoor(float DeltaTime)
 	FRotator DoorRotation = GetOwner()->GetActorRotation();
 	DoorRotation.Yaw = CurrentYaw;
 	GetOwner()->SetActorRotation(DoorRotation);
+
+	if (!AudioComponent) { return; }
+	if (!bIsDoorClosing)//Our 
+	{
+		AudioComponent->Play();
+		bIsDoorClosing = true;
+	}	
 }
 
 void UOpenDoor::CloseDoor(float DeltaTime)
@@ -71,6 +93,14 @@ void UOpenDoor::CloseDoor(float DeltaTime)
 	FRotator DoorRotation = GetOwner()->GetActorRotation();
 	DoorRotation.Yaw = CurrentYaw;
 	GetOwner()->SetActorRotation(DoorRotation);
+
+
+	if (!AudioComponent) { return; }
+	if (bIsDoorClosing)
+	{
+		AudioComponent->Play();
+		bIsDoorClosing = false;;
+	}
 }
 
 float UOpenDoor::TotalMassOfActors() const

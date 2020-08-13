@@ -28,8 +28,9 @@ protected:
 
 private:
 	float Reach = 100.f;
-
+	UPROPERTY()//Following the rules in the unreal documents. It has an explanation, its long.
 	UPhysicsHandleComponent* PhysicsHandle = nullptr;
+	UPROPERTY()
 	UInputComponent* InputComponent = nullptr;
 
 	void Grab();
