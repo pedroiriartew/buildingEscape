@@ -80,7 +80,7 @@ void UOpenDoor::OpenDoor(float DeltaTime)
 	GetOwner()->SetActorRotation(DoorRotation);
 
 	if (!AudioComponent) { return; }
-	if (!bIsDoorClosing)//Our 
+	if (!bIsDoorClosing)
 	{
 		AudioComponent->Play();
 		bIsDoorClosing = true;
