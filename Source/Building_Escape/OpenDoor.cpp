@@ -7,10 +7,10 @@
 #include "GameFramework/Actor.h"
 #include "GameFramework/PlayerController.h"
 
-	//OpenDoor.Yaw = FMath::Lerp(CurrentYaw, TargetYaw, 0.02f); //Este lerp hace algo así como una interpolacion exponencial. No es lo que queremos.
+	//OpenDoor.Yaw = FMath::Lerp(CurrentYaw, TargetYaw, 0.02f); //Este lerp hace algo asï¿½ como una interpolacion exponencial. No es lo que queremos.
 	/*
 	FInterpConstantTo es una funcion que interpola el current float con el target float a un ritmo constante
-	FInterpTo es más Smooth
+	FInterpTo es mï¿½s Smooth
 	*/
 	//OpenDoor.Yaw = FMath::FInterpConstantTo(CurrentYaw, TargetYaw,DeltaTime, 45.f);//Le paso el deltaTime de TickComponent
 
